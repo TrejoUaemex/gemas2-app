@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificación de Gemas</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/style.css">
+    <!-- Librerías Externas -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <div class="background-glows">
+        <div class="glow glow-1"></div>
+        <div class="glow glow-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Banner de Modo Demostración -->
+        <div id="demo-banner" class="demo-banner hidden">
+            <span class="warning-icon">⚠️</span>
+            <span>El servidor está corriendo en <strong>Modo Demo</strong> (pesos aleatorios). Para usar tu modelo entrenado, copia <code>model.pth</code> y <code>classes.json</code> en la carpeta <code>backend/</code>.</span>
+        </div>
+
+        <header class="app-header" style="position: relative;">
+            <div class="logo-container">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L19 7L21 14L12 22L3 14L5 7L12 2Z" fill="none"/>
+                    <path d="M12 2L12 22" stroke-dasharray="2 2"/>
+                    <path d="M5 7L19 7"/>
+                    <path d="M3 14L21 14"/>
+                    <path d="M12 2L3 14"/>
+                    <path d="M12 2L21 14"/>
+                    <path d="M19 7L12 22"/>
+                    <path d="M5 7L12 22"/>
+                </svg>
+                <h1 class="gradient-text">Clasificación de Gemas</h1>
+            </div>
+            <p class="subtitle">Clasificador de gemas y minerales</p>
+        </header>
+
+        <main class="main-card">
+            <!-- Sección de Entrada: Drag and Drop -->
+            <section class="upload-section">
+                <div id="dropzone" class="dropzone">
+                    <input type="file" id="fileInput" accept="image/*" class="file-input">
+                    <div class="dropzone-content" id="dropzone-content">
+                        <svg class="upload-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path d="M14.5 9.5L21 3M13 11L11 13M12.5 7.5L8.5 11.5M10.5 5.5L4.5 11.5M4 12L3 21L12 20L11 19M16.5 16.5L19.5 19.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M17 11.5L20 8.5L18.5 5.5L15.5 7L14.5 10L17 11.5Z" fill="rgba(212,175,55,0.2)"/>
+                        </svg>
+                        <h3>Arrastra tu imagen aquí</h3>
+                        <p>o haz clic para explorar tus archivos</p>
+                        <span class="file-limits">JPG, PNG, WEBP &bull; Máx. 5 MB</span>
+                    </div>
+                    
+                    <!-- Previsualización de la imagen cargada -->
+                    <div class="preview-container hidden" id="previewContainer">
+                        <img id="imagePreview" class="image-preview" src="#" alt="Previsualización">
+                        <button type="button" id="removeBtn" class="remove-btn" title="Eliminar imagen">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="camera-btn-container" style="text-align: center; margin-bottom: 1rem;">
+                    <button type="button" id="openCameraBtn" class="btn-camera">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                        Usar Cámara en vivo
+                    </button>
+                </div>
+
+                <div class="action-bar">
+                    <button id="classifyBtn" class="btn btn-primary disabled" disabled>
+                        <span>Clasificar Imagen</span>
+                        <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                    <button id="exportPdfBtn" class="btn btn-secondary hidden">
+                        <span>Descargar Certificado JPG</span>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Modal de Cámara -->
+            <div id="cameraModal" class="camera-modal hidden">
+                <div class="camera-modal-content">
+                    <div class="camera-header">
+                        <h3>Capturar Gema</h3>
+                        <button type="button" id="closeCameraBtn" class="camera-close">&times;</button>
+                    </div>
+                    <div class="video-container">
+                        <video id="cameraVideo" autoplay playsinline></video>
+                        <canvas id="cameraCanvas" class="hidden"></canvas>
+                    </div>
+                    <div class="camera-actions">
+                        <button type="button" id="captureBtn" class="btn btn-primary">Capturar Foto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Resultados (Gráfico de Barras y Ganador) -->
+            <section id="result-section" class="result-section hidden">
+                <div class="divider"></div>
+                
+                <!-- Animación de Carga (Skeleton Loader) -->
+                <div id="loader" class="loader-container hidden">
+                    <div class="spinner"></div>
+                    <p>Procesando inferencia con la CNN...</p>
+                </div>
+
+                <!-- Error: Imagen no válida -->
+                <div id="invalid-image-card" class="invalid-card hidden">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="invalid-icon">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                    <h3>Imagen no válida para clasificación</h3>
+                    <p>La imagen que cargaste no parece corresponder a ninguna gema o mineral de nuestro catálogo. Por favor, sube una fotografía clara de una <strong>piedra preciosa o mineral</strong>.</p>
+                    <button class="btn-retry" id="retryBtn">Intentar con otra imagen</button>
+                </div>
+
+                <div id="results-content" class="results-content">
+                    <div class="winner-card">
+                        <span class="badge">Predicción Principal</span>
+                        <h2 id="winner-class" class="winner-title">-</h2>
+                        <div class="progress-radial-container">
+                            <div class="radial-progress" id="winner-radial">
+                                <svg viewBox="0 0 36 36" class="circular-chart">
+                                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path class="circle" stroke-dasharray="0, 100" id="winner-circle" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <text x="18" y="20.35" class="percentage" id="winner-percent">0%</text>
+                                </svg>
+                            </div>
+                            <p class="confidence-label">Confianza del modelo</p>
+                        </div>
+                        <div id="gem-description-container" class="gem-description hidden">
+                            <h4>Acerca de esta gema</h4>
+                            <p id="gem-description-text"></p>
+                        </div>
+                    </div>
+
+                    <div class="distribution-card">
+                        <h3>Distribución de Probabilidades</h3>
+                        <div class="bars-container" id="bars-container">
+                            <!-- Aquí se inyectan las barras dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Plantilla oculta para el PDF del Certificado -->
+        <div id="pdf-certificate-template" class="pdf-certificate hidden">
+            <div class="pdf-header">
+                <h2>Certificado de Clasificación Mineralógica</h2>
+                <p>NeuralVision GemMiner • Analizador con Deep Learning</p>
+            </div>
+            <div class="pdf-body">
+                <div class="pdf-image-container">
+                    <img id="pdfImage" src="" alt="Gema analizada">
+                </div>
+                <div class="pdf-results">
+                    <h3>Identificación Principal</h3>
+                    <p class="pdf-gem-name" id="pdfGemName">-</p>
+                    <p class="pdf-confidence">Confianza de IA: <span id="pdfConfidence">-</span></p>
+                    <div class="pdf-description" id="pdfDescription"></div>
+                </div>
+            </div>
+            <div class="pdf-footer">
+                <p>Generado automáticamente. Este documento no reemplaza el análisis de un gemólogo certificado.</p>
+                <div class="pdf-seal">Sello de Autenticidad IA</div>
+            </div>
+        </div>
+
+        <!-- Widget Flotante de Chat (Gemini) -->
+        <div class="chat-widget" id="chatWidget">
+            <button class="chat-toggle-btn" id="chatToggleBtn" title="Chatear con IA">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="chat-icon-svg">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span class="chat-badge hidden" id="chatBadge">!</span>
+            </button>
+
+            <div class="chat-window hidden" id="chatWindow">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <span class="chat-avatar-status"></span>
+                        <div>
+                            <h4>Asistente Virtual</h4>
+                            <span class="chat-status-text">Gemini IA • Especializado</span>
+                        </div>
+                    </div>
+                    <button class="chat-close-btn" id="chatCloseBtn">&times;</button>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message message-bot">
+                        Hola, soy tu asistente de gemologia. Puedo ayudarte con cualquier consulta sobre las clases que clasifica nuestro modelo. ¿De qué te gustaría hablar hoy?
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Pregunta sobre las clases..." autocomplete="off">
+                    <button id="chatSendBtn" class="chat-send-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="app-footer-note">
+            <p>Trabajo Práctico CNN • Desarrollado con FastAPI y PyTorch</p>
+        </footer>
+    </div>
+
+    <script src="static/app.js"></script>
+</body>
+</html>
